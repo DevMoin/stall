@@ -1,0 +1,32 @@
+#!/usr/bin/env php
+<?php
+require_once 'fn.php';
+$cliInfo = getArgsProps($argv);
+define("ROOT_PATH", __DIR__);
+define("CWD_TARGET", str_replace("\\","/", getcwd()));
+define("CWD_TARGET_UNIX", windowDriveToUnix(CWD_TARGET));
+
+
+
+$command = isset($cliInfo['info']['command'])?$cliInfo['info']['command'] : 'help';
+
+$command = 'help';
+$commander = new Commands();
+$commands = getCommandsKeys($commander);
+
+$argsInfo = getArgsProps($argv);
+
+if(isset($argsInfo['info']['command']))
+{
+    $command = $argsInfo['info']['command'];
+}
+
+if(!isset($commands[$command]))
+{
+    echo st(" Unknown command ", 'bg_red', 'italic').' : '.st($command, 'red', 'bold');
+    $command = 'help';
+}
+
+
+call_user_func($commands[$command], $argsInfo);
+
