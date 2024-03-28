@@ -7,13 +7,6 @@ class CreateTemplate
      */
     function drupal($source_final, $tplName, $tplPath, &$infoJson, $args)
     {
-
-        mkdir(__DIR__."/src/Templates/$tplName");
-
-        file_put_contents(__DIR__."/src/Templates/$tplName/installer.php", "<?php
-require_once(ROOT_PATH.'/src/installer-scripts/drupal.php');
-");
-
         $composerPath = realpath($source_final . "/composer.json");
         if (!$composerPath) {
             showError("No composer.json file found in specified directory");
@@ -36,14 +29,16 @@ require_once(ROOT_PATH.'/src/installer-scripts/drupal.php');
             $settingsPath = realpath($source_final . "/web/sites/default/settings.php");
         }
 
-        nl(3);
-        echo st("Creating template folder. Fake waiting lolz", "bg_blue");
-        // sleep(1);
+        echo nl(3) . st("Creating template folder. Fake waiting lolz", "bg_blue");
         mkdir($tplPath);
-        nl(3);
-        echo st("Template folder created\n", "green");
+        echo st(nl(3) . "Template folder created\n", "green");
 
-        if (!$settingsPath) {
+        file_put_contents("$tplPath/installer.php", "<?php
+require_once(ROOT_PATH.'/src/installer-scripts/drupal.php');
+");
+        if (isset($args['options']['--no-db'])) {
+            showInfo("Skipped database because --no-db is set");
+        } else if (!$settingsPath) {
             showError("No settings.php found will only create folder without database");
         } else {
             $dbInfo = $this->drupalReadSettings($settingsPath);
@@ -65,20 +60,19 @@ require_once(ROOT_PATH.'/src/installer-scripts/drupal.php');
             }
         }
 
+        nl();
+        showInfo("Archiving/zipping $tplPath", "INFO");
 
-        $tarExe = realpath(__DIR__ . "/exe/tar.exe");
-        $destination = escapeshellarg("$tplPath/files.tar.gz");
-        $source = escapeshellarg(getcwd());
-        $destination = preg_replace("/^\"(.?)\:/", "\"/$1", $destination);
-        $source = preg_replace("/^\"(.?)\:/", "\"/$1", $source);
-        $tarCommand = "$tarExe cvzf " . $destination . " " . $source;
-        $tarCommand = str_replace("\\", "/", $tarCommand);
-        exec($tarCommand, $output, $code);
-        if ($code !== 0) {
-            showError("Something went wrong while tar gziping");
+        $phar = new PharData($tplPath . "/files.tar.gz");
+        if (!$phar) {
+            showError("Failed to create files.tar.gz", "Failure");
             exit;
         }
-        echo nl() . "Successfully create template in $tplPath";
+        $phar->compress(Phar::GZ);
+        $phar->buildFromDirectory($source_final);
+        
+        nl();
+        showSuccess("Templae file created succesfully $tplPath");
     }
 
     private function drupalReadSettings($path)

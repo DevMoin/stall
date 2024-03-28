@@ -4,8 +4,22 @@ require_once 'styles.php';
 
 require_once "Commands.php";
 
-function windowDriveToUnix($path){
-    return "/".$path[0]."/".substr($path, 3);
+function dir_is_empty($dir)
+{
+    $handle = opendir($dir);
+    while (false !== ($entry = readdir($handle))) {
+        if ($entry != "." && $entry != "..") {
+            closedir($handle);
+            return false;
+        }
+    }
+    closedir($handle);
+    return true;
+}
+
+function windowDriveToUnix($path)
+{
+    return "/" . $path[0] . "/" . substr($path, 3);
 }
 
 function myExec($command)
@@ -18,6 +32,17 @@ function nl($count = 1)
 {
     echo str_repeat("\n", $count);
 }
+
+function showInfo($msg, $header = "Info")
+{
+    echo nl() . st(" $header: ", 'bg_blue', 'bold', 'white') . style('reset') . st(" $msg ", 'blue', '', 'bold') . nl();
+}
+
+function showSuccess($msg, $header = "Success")
+{
+    echo nl() . st(" $header: ", 'bg_green', 'bold', 'white') . style('reset') . st(" $msg ", 'green', '', 'bold') . nl();
+}
+
 function showError($msg, $header = "Error")
 {
     echo nl() . st(" $header: ", 'bg_red', 'bold', 'white') . style('reset') . st(" $msg ", 'red', '', 'bold') . nl();
@@ -144,11 +169,11 @@ function print_table($result, $hasHeader = false)
             $columnFinal = array_shift($columnSplit);
             foreach ($columnSplit as $columnLine) {
                 $columnFinal .= "\n";
-                $columnFinal .= str_repeat(" ", $maxlenghthsSum).$columnLine;
+                $columnFinal .= str_repeat(" ", $maxlenghthsSum) . $columnLine;
             }
             echo str_pad($columnFinal, $len + 1, " ", $lineI == 0 ? STR_PAD_BOTH : STR_PAD_RIGHT);
             echo "    ";
-            $maxlenghthsSum += $len+5;
+            $maxlenghthsSum += $len + 5;
         }
         if ($lineI == 0) {
             echo "\n";
